@@ -14,7 +14,7 @@ class Quote(models.Model):
     text = models.TextField()
     author = models.ForeignKey(Author, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    tags = models.CharField(max_length=255, blank=True, null=True)
+    tags = models.CharField(max_length=255)
    
     def __str__(self):
         return self.text

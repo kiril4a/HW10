@@ -8,6 +8,9 @@ django.setup()
 import mongoengine
 from quotes.models import Author, Quote
 from django.contrib.auth.models import User
+# Створення користувача з ідентифікатором 1
+User.objects.create_user(username='admin', password='admin_password', email='admin@example.com', id=1)
+
 # Підключення до MongoDB
 mongoengine.connect(
     db="cluster0",
@@ -56,11 +59,15 @@ def migrate_quotes():
         print(f"MongoDB Quote: {mongo_quote.quote}")
         try:
             author = Author.objects.get(fullname=mongo_quote.author.fullname)
+            # Зберігаємо теги як рядок з комами
+            tags_str = ", ".join(mongo_quote.tags)
+            
             # Знайдіть відповідного користувача Django, якщо він є
             user = User.objects.first()
             if user:
                 quote, created = Quote.objects.get_or_create(
                     text=mongo_quote.quote,
+                    tags=tags_str,
                     author=author,
                     user=user  # Призначення користувача для цитати
                 )
