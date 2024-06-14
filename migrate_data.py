@@ -1,12 +1,13 @@
 import os
 import django
+
+
 # Налаштування Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "quotes_project.settings")
 django.setup()
 import mongoengine
 from quotes.models import Author, Quote
 from django.contrib.auth.models import User
-
 # Підключення до MongoDB
 mongoengine.connect(
     db="cluster0",
@@ -53,18 +54,24 @@ def migrate_quotes():
     print("=== Quotes Migration ===")
     for mongo_quote in MongoQuote.objects:
         print(f"MongoDB Quote: {mongo_quote.quote}")
-        author = Author.objects.get(fullname=mongo_quote.author.fullname)
-        quote, created = Quote.objects.get_or_create(
-            text=mongo_quote.quote,
-            author=author,
-            defaults={
-                'user': User.objects.first() 
-            }
-        )
-        if created:
-            print(f"Created Django Quote: {quote.text}")
-        else:
-            print(f"Found Existing Django Quote: {quote.text}")
+        try:
+            author = Author.objects.get(fullname=mongo_quote.author.fullname)
+            # Знайдіть відповідного користувача Django, якщо він є
+            user = User.objects.first()
+            if user:
+                quote, created = Quote.objects.get_or_create(
+                    text=mongo_quote.quote,
+                    author=author,
+                    user=user  # Призначення користувача для цитати
+                )
+                if created:
+                    print(f"Created Django Quote: {quote.text}")
+                else:
+                    print(f"Found Existing Django Quote: {quote.text}")
+            else:
+                print("No Django users found. Cannot migrate quotes.")
+        except Author.DoesNotExist:
+            print(f"Author '{mongo_quote.author.fullname}' does not exist in Django. Skipping quote.")
 
 # Виклик функцій міграції
 if __name__ == "__main__":
